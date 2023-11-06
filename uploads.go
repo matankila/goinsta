@@ -9,12 +9,39 @@ import (
 	"math"
 	"math/rand"
 	"net/http"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 )
+
+type StoryStickerInfo struct {
+	StoryLinkStickers []StoryLinkSticker `json:"story_link_stickers"`
+	StoryStickerIds   string             `json:"story_sticker_ids"`
+}
+
+type StoryLinkSticker struct {
+	X         float64   `json:"x"`
+	Y         float64   `json:"y"`
+	Z         int       `json:"z"`
+	Width     float64   `json:"width"`
+	Height    float64   `json:"height"`
+	Rotation  int       `json:"rotation"`
+	IsPinned  int       `json:"is_pinned"`
+	IsHidden  int       `json:"is_hidden"`
+	IsSticker bool      `json:"is_sticker"`
+	StoryLink StoryLink `json:"story_link"`
+}
+
+type StoryLink struct {
+	LinkType      string `json:"link_type"`
+	URL           string `json:"url"`
+	TapStateStrId string `json:"tap_state_str_id"`
+	LinkTitle     string `json:"link_title"`
+	DisplayURL    string `json:"display_url"`
+}
 
 type UploadOptions struct {
 	insta *Instagram
@@ -30,6 +57,9 @@ type UploadOptions struct {
 	Caption string
 	// Set to true if you want to post a story
 	IsStory bool
+	// Set if you wish to use stickers
+	StoryStickerInfo *StoryStickerInfo
+
 	// Option flags, set to true disable
 	MuteAudio            bool
 	DisableComments      bool
@@ -580,8 +610,48 @@ func (o *UploadOptions) createPhotoConfig() {
 		config["client_shared_at"] = o.startTime
 		config["imported_taken_at"] = toString(t - 3600)
 		config["camera_session_id"] = generateUUID()
+		o.setSticker(&config)
 	}
 	o.config = config
+}
+
+func (o *UploadOptions) setSticker(config *map[string]interface{}) {
+
+	if o.StoryStickerInfo != nil {
+
+		cfg := *config
+		if len(o.StoryStickerInfo.StoryLinkStickers) != 0 {
+
+			cfg["story_sticker_ids"] = "link_sticker_default"
+			cfg["tap_models"] = []map[string]interface{}{}
+			l := cfg["tap_models"].([]map[string]interface{})
+
+			for _, storySticker := range o.StoryStickerInfo.StoryLinkStickers {
+				v := reflect.ValueOf(storySticker)
+				tm := map[string]interface{}{}
+				typeOfS := v.Type()
+				for i := 0; i < v.NumField(); i++ {
+					if typeOfS.Field(i).Name == "StoryLink" {
+
+						tm["link_type"] = "web"
+						tm["tap_state_str_id"] = "link_sticker_default"
+						tm["url"] = storySticker.StoryLink.URL
+						tm["link_title"] = storySticker.StoryLink.LinkTitle
+					} else {
+
+						tm[typeOfS.Field(i).Name] = v.Field(i).Interface()
+					}
+				}
+
+				tm["type"] = "story_link"
+				l = append(l, tm)
+			}
+
+			cfg["tap_models"] = l
+		}
+
+		config = &cfg
+	}
 }
 
 func (o *UploadOptions) createVideoConfig() error {
