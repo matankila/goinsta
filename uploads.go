@@ -629,7 +629,7 @@ func (o *UploadOptions) setSticker(config *map[string]interface{}) {
 				tm := map[string]interface{}{}
 				typeOfS := v.Type()
 				for i := 0; i < v.NumField(); i++ {
-					if typeOfS.Field(i).Tag.Get("json") == "StoryLink" {
+					if typeOfS.Field(i).Tag.Get("json") == "story_link" {
 
 						tm["link_type"] = "web"
 						tm["tap_state_str_id"] = "link_sticker_default"
