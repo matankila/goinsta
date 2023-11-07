@@ -29,8 +29,6 @@ type StoryLinkSticker struct {
 	Width     float64   `json:"width"`
 	Height    float64   `json:"height"`
 	Rotation  int       `json:"rotation"`
-	IsPinned  int       `json:"is_pinned"`
-	IsHidden  int       `json:"is_hidden"`
 	IsSticker bool      `json:"is_sticker"`
 	StoryLink StoryLink `json:"story_link"`
 }
@@ -631,7 +629,7 @@ func (o *UploadOptions) setSticker(config *map[string]interface{}) {
 				tm := map[string]interface{}{}
 				typeOfS := v.Type()
 				for i := 0; i < v.NumField(); i++ {
-					if typeOfS.Field(i).Name == "StoryLink" {
+					if typeOfS.Field(i).Tag.Get("json") == "StoryLink" {
 
 						tm["link_type"] = "web"
 						tm["tap_state_str_id"] = "link_sticker_default"
@@ -639,7 +637,7 @@ func (o *UploadOptions) setSticker(config *map[string]interface{}) {
 						tm["link_title"] = storySticker.StoryLink.LinkTitle
 					} else {
 
-						tm[typeOfS.Field(i).Name] = v.Field(i).Interface()
+						tm[typeOfS.Field(i).Tag.Get("json")] = v.Field(i).Interface()
 					}
 				}
 
