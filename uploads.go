@@ -635,17 +635,21 @@ func (o *UploadOptions) setSticker(config *map[string]interface{}) {
 						tm["tap_state_str_id"] = "link_sticker_default"
 						tm["url"] = storySticker.StoryLink.URL
 						tm["link_title"] = storySticker.StoryLink.LinkTitle
+						tm["display_url"] = storySticker.StoryLink.URL
 					} else {
-
 						tm[typeOfS.Field(i).Tag.Get("json")] = v.Field(i).Interface()
 					}
 				}
 
+				tm["str_id"] = "1224567"
 				tm["type"] = "story_link"
+				tm["selected_index"] = 0
+				tm["tap_state"] = 0
 				l = append(l, tm)
 			}
 
 			cfg["tap_models"] = l
+			cfg["story_sticker_ids"] = "1224567"
 		}
 
 		config = &cfg
